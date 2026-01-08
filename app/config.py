@@ -20,6 +20,7 @@ class Settings:
     # --- security/admin ---
     secret_key: str = os.getenv("SECRET_KEY", "").strip()
     admin_token_expire_hours: int = int(os.getenv("ADMIN_TOKEN_EXPIRE_HOURS", "12"))
+    setup_token: str = os.getenv("SETUP_TOKEN", "").strip()
 
     @property
     def SECRET_KEY(self) -> str:
@@ -28,6 +29,10 @@ class Settings:
     @property
     def ADMIN_TOKEN_EXPIRE_HOURS(self) -> int:
         return self.admin_token_expire_hours
+
+    @property
+    def SETUP_TOKEN(self) -> str:
+        return self.setup_token
 
     # --- device tokens ---
     device_tokens: str = os.getenv("DEVICE_TOKENS", "").strip()

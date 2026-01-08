@@ -16,6 +16,7 @@ services:
       - SNAPSHOT_ON_LOW_CONF=true
       - LOW_CONF_DISTANCE=0.85
       - ADMIN_TOKEN_EXPIRE_HOURS=12
+      - SETUP_TOKEN=12345678
     volumes:
       - ./data:/app/data
       - ./absensi.db:/app/absensi.db
