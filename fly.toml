@@ -1,0 +1,60 @@
+# fly.toml app configuration file generated for absensi-api on 2026-01-08T16:00:00+07:00
+
+app = "absensi-api"
+kill_signal = "SIGINT"
+kill_timeout = 5
+processes = []
+
+[env]
+  DATABASE_URL = "sqlite:///./absensi.db"
+  DEVICE_TOKENS = "stb-01:ISI_TOKEN_DEVICE_KAMU"
+  SECRET_KEY = "ini_kunci_rahasia_panjang_minimal_32_karakter_ubah_sendiri_123456"
+  MAX_DISTANCE = "0.95"
+  MIN_FACE_PX = "90"
+  COOLDOWN_SECONDS = "45"
+  SAVE_SNAPSHOTS = "true"
+  SNAPSHOT_DIR = "./data/snapshots"
+  SNAPSHOT_ON_UNKNOWN = "true"
+  SNAPSHOT_ON_LOW_CONF = "true"
+  LOW_CONF_DISTANCE = "0.85"
+  ADMIN_TOKEN_EXPIRE_HOURS = "12"
+  PORT = "8080"
+
+[[services]]
+  internal_port = 8080
+  processes = ["app"]
+  protocol = "tcp"
+  [services.concurrency]
+    hard_limit = 25
+    soft_limit = 20
+    type = "connections"
+
+  [[services.ports]]
+    handlers = ["http"]
+    port = 80
+
+  [[services.ports]]
+    handlers = ["tls", "http"]
+    port = 443
+
+  [[services.tcp_checks]]
+    grace_period = "1s"
+    interval = "15s"
+    restart_limit = 6
+    timeout = "2s"
+
+  [[services.http_checks]]
+    grace_period = "5s"
+    interval = "10s"
+    method = "get"
+    path = "/health"
+    protocol = "http"
+    restart_limit = 6
+    timeout = "2s"
+
+[deploy]
+  release_command = "python -c 'from app.models import Base; from app.config import engine; Base.metadata.create_all(bind=engine)'"
+
+[[mounts]]
+  destination = "/app/data"
+  source = "absensi_data"
