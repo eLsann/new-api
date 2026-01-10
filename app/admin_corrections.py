@@ -1,10 +1,10 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-from datetime import datetime
+from datetime import datetime, timezone
 
 from app.database import get_db
 from app.models import AttendanceEvent, DailyAttendance
-from app.admin_security import require_admin_session
+from app.admin_auth import get_current_admin
 
 router = APIRouter(prefix="/admin", tags=["admin"])
 
@@ -26,9 +26,9 @@ def correct_event(
     event_id: int,
     payload: dict,
     db: Session = Depends(get_db),
-    authorization: str = "",
+    admin=Depends(get_current_admin),
 ):
-    admin = require_admin_session(db, authorization)
+
 
     new_name = (payload.get("final_name") or "").strip()
     edit_note = payload.get("edit_note")
@@ -58,7 +58,7 @@ def correct_event(
 
     # audit
     ev.edited_by = admin.username
-    ev.edited_at = datetime.utcnow()
+    ev.edited_at = datetime.now(timezone.utc).replace(tzinfo=None)
     ev.edit_note = edit_note
 
     # update event final_name
@@ -75,7 +75,7 @@ def correct_event(
             old_daily.in_is_late = False
         if event_type == "OUT" and old_daily.out_time == ts:
             old_daily.out_time = None
-        old_daily.updated_at = datetime.utcnow()
+        old_daily.updated_at = datetime.now(timezone.utc).replace(tzinfo=None)
         db.add(old_daily)
 
     # apply to new slot: earliest IN, latest OUT
@@ -87,7 +87,7 @@ def correct_event(
         if new_daily.out_time is None or ts > new_daily.out_time:
             new_daily.out_time = ts
 
-    new_daily.updated_at = datetime.utcnow()
+    new_daily.updated_at = datetime.now(timezone.utc).replace(tzinfo=None)
     db.add(new_daily)
 
     db.commit()

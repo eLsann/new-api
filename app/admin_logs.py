@@ -3,14 +3,14 @@ from sqlalchemy.orm import Session
 
 from app.database import get_db
 from app.models import AttendanceEvent, DailyAttendance
-from app.admin_security import require_admin_session
+from app.admin_auth import get_current_admin
 
 router = APIRouter(prefix="/admin", tags=["admin"])
 
 @router.get("/events")
 def list_events(
     db: Session = Depends(get_db),
-    authorization: str = "",
+    _admin=Depends(get_current_admin),
     limit: int = Query(default=50, ge=1, le=500),
     offset: int = Query(default=0, ge=0),
     status: str | None = Query(default=None),
@@ -18,7 +18,7 @@ def list_events(
     day: str | None = Query(default=None),
     device_id: str | None = Query(default=None),
 ):
-    require_admin_session(db, authorization)
+
 
     q = db.query(AttendanceEvent)
     if status:
@@ -55,14 +55,14 @@ def list_events(
 @router.get("/daily")
 def list_daily(
     db: Session = Depends(get_db),
-    authorization: str = "",
+    _admin=Depends(get_current_admin),
     day: str | None = Query(default=None),
     month: str | None = Query(default=None, description="YYYY-MM"),
     name: str | None = Query(default=None),
     limit: int = Query(default=200, ge=1, le=2000),
     offset: int = Query(default=0, ge=0),
 ):
-    require_admin_session(db, authorization)
+
 
     q = db.query(DailyAttendance)
     if day:

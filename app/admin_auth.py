@@ -1,24 +1,24 @@
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Header, status
 from sqlalchemy.orm import Session
 from jose import jwt, JWTError
-from passlib.context import CryptContext
 
 from app.database import get_db
 from app.config import settings
-from app.models import AdminUser  # pastikan model ini ada
+from app.models import AdminUser
+from app.security import verify_password  # Import from centralized security module
 
 
 router = APIRouter(prefix="/admin", tags=["admin-auth"])
 
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 ALGORITHM = "HS256"
 
 
+
 def _create_access_token(sub: str, expire_hours: int) -> str:
-    exp = datetime.utcnow() + timedelta(hours=expire_hours)
+    exp = datetime.now(timezone.utc) + timedelta(hours=expire_hours)
     payload = {"sub": sub, "exp": exp}
     return jwt.encode(payload, settings.secret_key, algorithm=ALGORITHM)
 

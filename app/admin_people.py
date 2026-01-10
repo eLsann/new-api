@@ -59,12 +59,26 @@ async def enroll_person(
     if not files:
         raise HTTPException(status_code=400, detail="no files uploaded")
 
+    # Validate file types and sizes
+    ALLOWED_EXTENSIONS = {".jpg", ".jpeg", ".png", ".bmp"}
+    MAX_FILE_SIZE = 10 * 1024 * 1024  # 10MB
+
     added = 0
     skipped = 0
 
     for f in files:
+        # Validate file extension
+        if f.filename:
+            import os
+            ext = os.path.splitext(f.filename)[1].lower()
+            if ext not in ALLOWED_EXTENSIONS:
+                skipped += 1
+                continue
+
         img_bytes = await f.read()
-        if not img_bytes:
+        
+        # Validate file size
+        if not img_bytes or len(img_bytes) > MAX_FILE_SIZE:
             skipped += 1
             continue
 
@@ -98,6 +112,7 @@ async def enroll_person(
         "embeddings_added": added,
         "skipped": skipped,
     }
+
 
 
 @router.delete("/persons/{person_id}")

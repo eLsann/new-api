@@ -1,6 +1,6 @@
 from sqlalchemy import String, Integer, Float, DateTime, ForeignKey, Boolean, UniqueConstraint, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from datetime import datetime
+from datetime import datetime, timezone
 from app.database import Base
 
 class Person(Base):
@@ -24,7 +24,7 @@ class AttendancePolicy(Base):
     late_after_time: Mapped[str] = mapped_column(String(5), default="08:00")
     out_start_time: Mapped[str] = mapped_column(String(5), default="15:00")
     retention_days: Mapped[int] = mapped_column(Integer, default=60)
-    updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(timezone.utc).replace(tzinfo=None))
 
 class AttendanceEvent(Base):
     __tablename__ = "attendance_events"
@@ -34,7 +34,7 @@ class AttendanceEvent(Base):
     day: Mapped[str] = mapped_column(String(10), index=True)  # YYYY-MM-DD
 
     # store UTC naive for simplicity
-    ts: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, index=True)
+    ts: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(timezone.utc).replace(tzinfo=None), index=True)
 
     device_id: Mapped[str] = mapped_column(String(80), index=True)
 
@@ -66,7 +66,7 @@ class DailyAttendance(Base):
 
     out_time: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
 
-    updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(timezone.utc).replace(tzinfo=None))
 
 class AdminUser(Base):
     __tablename__ = "admin_users"
@@ -74,12 +74,18 @@ class AdminUser(Base):
     username: Mapped[str] = mapped_column(String(80), unique=True, index=True)
     password_hash: Mapped[str] = mapped_column(String(255))
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(timezone.utc).replace(tzinfo=None))
+
 
 class AdminSession(Base):
+    """
+    DEPRECATED: This model is kept for backward compatibility only.
+    Authentication now uses JWT tokens (see admin_auth.py).
+    This table is not actively used and can be removed in future migrations.
+    """
     __tablename__ = "admin_sessions"
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     token: Mapped[str] = mapped_column(String(64), unique=True, index=True)
     user_id: Mapped[int] = mapped_column(ForeignKey("admin_users.id"), index=True)
     expires_at: Mapped[datetime] = mapped_column(DateTime, index=True)
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(timezone.utc).replace(tzinfo=None))

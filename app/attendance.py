@@ -1,4 +1,4 @@
-from datetime import datetime, time as dtime, timedelta
+from datetime import datetime, time as dtime, timedelta, timezone
 from zoneinfo import ZoneInfo
 from sqlalchemy.orm import Session
 
@@ -126,7 +126,7 @@ def decide_and_record(
         final_status = "duplicate"
         audio_text = f"Halo {person_name}, absensi hari ini sudah lengkap."
 
-    daily.updated_at = datetime.utcnow()
+    daily.updated_at = datetime.now(timezone.utc).replace(tzinfo=None)
     db.add(daily)
 
     ev = AttendanceEvent(

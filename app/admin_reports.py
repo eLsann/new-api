@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 
 from app.database import get_db
 from app.models import DailyAttendance
-from app.admin_security import require_admin_session
+from app.admin_auth import get_current_admin
 
 router = APIRouter(prefix="/admin", tags=["admin"])
 
@@ -11,9 +11,9 @@ router = APIRouter(prefix="/admin", tags=["admin"])
 def report_monthly(
     month: str = Query(..., description="YYYY-MM"),
     db: Session = Depends(get_db),
-    authorization: str = "",
+    _admin=Depends(get_current_admin),
 ):
-    require_admin_session(db, authorization)
+
 
     rows = db.query(DailyAttendance).filter(DailyAttendance.day.startswith(month)).all()
 

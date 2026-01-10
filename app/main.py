@@ -1,6 +1,11 @@
 from dotenv import load_dotenv
 load_dotenv()
 
+# Initialize logging first
+from app.logging_config import setup_logging, get_logger
+setup_logging(app_name="absensi_api", log_level="INFO")
+logger = get_logger(__name__)
+
 from fastapi import FastAPI, File, UploadFile, Header, HTTPException, Depends
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
@@ -71,7 +76,10 @@ async def v1_recognize(
     x_device_token: str = Header(default=""),
     db: Session = Depends(get_db),
 ):
+    logger.info(f"Recognition request from device: {x_device_id}")
+    
     if not verify_device(x_device_id, x_device_token):
+        logger.warning(f"Unauthorized device access attempt: {x_device_id}")
         raise HTTPException(status_code=401, detail="Unauthorized device")
 
     img_bytes = await file.read()
@@ -79,6 +87,7 @@ async def v1_recognize(
     try:
         ident = identify(img_bytes=img_bytes, db=db)
     except ValueError as e:
+        logger.error(f"Image processing error from device {x_device_id}: {str(e)}")
         return JSONResponse(
             {
                 "status": "reject",
@@ -163,9 +172,11 @@ async def v1_recognize(
     )
 
 @app.post("/admin/rebuild_cache")
-def admin_rebuild_cache(db: Session = Depends(get_db), authorization: str = ""):
-    # require session indirectly by importing security in routers; easiest: just attempt to rebuild after check
-    from app.admin_security import require_admin_session
-    require_admin_session(db, authorization)
+def admin_rebuild_cache(
+    db: Session = Depends(get_db), 
+    _admin=Depends(get_current_admin)
+):
+    from app.admin_auth import get_current_admin
+    logger.info("Rebuilding face recognition cache via admin request")
     rebuild_cache(db)
     return {"ok": True}
