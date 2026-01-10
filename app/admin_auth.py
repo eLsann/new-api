@@ -79,36 +79,3 @@ def get_current_admin(
         raise HTTPException(status_code=401, detail="Invalid token")
 
     return user
-
-
-@router.post("/create_admin")
-def create_admin(
-    payload: dict,
-    db: Session = Depends(get_db),
-    x_setup_token: Optional[str] = Header(default=None, alias="X-Setup-Token"),
-    authorization: Optional[str] = Header(default=None),
-):
-    username = (payload.get("username") or "").strip()
-    password = payload.get("password") or ""
-
-    if not username or not password:
-        raise HTTPException(status_code=400, detail="username & password required")
-
-    existing_count = db.query(AdminUser).count()
-
-    if existing_count > 0:
-        get_current_admin(authorization=authorization, db=db)
-    else:
-        if not settings.setup_token:
-            raise HTTPException(status_code=500, detail="SETUP_TOKEN is not configured")
-        if not x_setup_token or x_setup_token.strip() != settings.setup_token:
-            raise HTTPException(status_code=403, detail="Invalid setup token")
-
-    exist = db.query(AdminUser).filter(AdminUser.username == username).one_or_none()
-    if exist:
-        return {"ok": True, "created": False, "username": exist.username}
-
-    u = AdminUser(username=username, password_hash=pwd_context.hash(password), is_active=True)
-    db.add(u)
-    db.commit()
-    return {"ok": True, "created": True, "username": username}

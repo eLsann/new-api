@@ -7,10 +7,14 @@ from passlib.context import CryptContext
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 def hash_password(password: str) -> str:
-    return pwd_context.hash(password)
+    # Truncate password to 72 characters (bcrypt limit)
+    truncated_password = password[:72] if len(password) > 72 else password
+    return pwd_context.hash(truncated_password)
 
 def verify_password(password: str, password_hash: str) -> bool:
-    return pwd_context.verify(password, password_hash)
+    # Truncate password to 72 characters (bcrypt limit)
+    truncated_password = password[:72] if len(password) > 72 else password
+    return pwd_context.verify(truncated_password, password_hash)
 
 def create_access_token(data: dict, secret_key: str, expires_minutes: int = 60) -> str:
     to_encode = data.copy()
