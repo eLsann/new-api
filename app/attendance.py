@@ -45,7 +45,7 @@ def decide_and_record(
         db.commit()
         return {"status": status, "event_type": None, "is_late": False, "audio_text": None}
 
-    # ✅ cooldown per orang per hari
+    # Daily cooldown check
     last = (
         db.query(AttendanceEvent)
         .filter(

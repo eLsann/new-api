@@ -35,7 +35,7 @@ def admin_login(payload: dict, db: Session = Depends(get_db)):
     if user is None:
         raise HTTPException(status_code=401, detail="Invalid credentials")
 
-    if not pwd_context.verify(password, user.password_hash):
+    if not verify_password(password, user.password_hash):
         raise HTTPException(status_code=401, detail="Invalid credentials")
 
     token = _create_access_token(username, settings.admin_token_expire_hours)
@@ -46,7 +46,7 @@ def get_current_admin(
     authorization: Optional[str] = Header(None),
     db: Session = Depends(get_db),
 ):
-    # ✅ KUNCI: BACA Authorization HEADER
+    # Parse authorization header
     if not authorization:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,

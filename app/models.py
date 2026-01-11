@@ -13,7 +13,7 @@ class Embedding(Base):
     __tablename__ = "embeddings"
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     person_id: Mapped[int] = mapped_column(ForeignKey("persons.id"), index=True)
-    vec_csv: Mapped[str] = mapped_column(String, nullable=False)
+    vec_csv: Mapped[str] = mapped_column(Text, nullable=False)
     person = relationship("Person", back_populates="embeddings")
 
 class AttendancePolicy(Base):
@@ -46,9 +46,9 @@ class AttendanceEvent(Base):
 
     status: Mapped[str] = mapped_column(String(40))  # ok/unknown/reject/error/duplicate/cooldown/reject_out_too_early
     distance: Mapped[float | None] = mapped_column(Float, nullable=True)
-    snapshot_path: Mapped[str | None] = mapped_column(String, nullable=True)
+    snapshot_path: Mapped[str | None] = mapped_column(String(255), nullable=True)
 
-    # audit trail (koreksi admin)
+    # Audit trail
     edited_by: Mapped[str | None] = mapped_column(String(80), nullable=True)
     edited_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
     edit_note: Mapped[str | None] = mapped_column(Text, nullable=True)
@@ -75,17 +75,4 @@ class AdminUser(Base):
     password_hash: Mapped[str] = mapped_column(String(255))
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(timezone.utc).replace(tzinfo=None))
-
-
-class AdminSession(Base):
-    """
-    DEPRECATED: This model is kept for backward compatibility only.
-    Authentication now uses JWT tokens (see admin_auth.py).
-    This table is not actively used and can be removed in future migrations.
-    """
-    __tablename__ = "admin_sessions"
-    id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    token: Mapped[str] = mapped_column(String(64), unique=True, index=True)
-    user_id: Mapped[int] = mapped_column(ForeignKey("admin_users.id"), index=True)
-    expires_at: Mapped[datetime] = mapped_column(DateTime, index=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(timezone.utc).replace(tzinfo=None))
