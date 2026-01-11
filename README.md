@@ -10,7 +10,7 @@ Python 3.11
 
 Sistem Absensi Wajah Berbasis API dengan FastAPI, Facenet-PyTorch, dan MySQL.
 
-## Struktur Project 📂
+## Struktur Project 
 ```
 newApi/
 ├── app/                  # Source Code API
@@ -25,7 +25,7 @@ newApi/
 └── _archive/             # File lama/backup (tidak dipakai)
 ```
 
-## Cara Deployment (Laragon) 🚀
+## Deployment (Laragon) 
 1. Pastikan **Laragon** sudah terinstall dengan **MySQL 8.0+** dan **Python 3.10+**.
 2. Jalankan script deployment otomatis:
    ```cmd
@@ -42,13 +42,13 @@ newApi/
    python -m uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
    ```
 
-## Fitur ✨
+## Fitur 
 - **Rekognisi Wajah**: Menggunakan Facenet (InceptionResnetV1).
 - **Anti-Spoofing**: (Basic) Threshold distance check.
 - **Reporting**: API untuk log absensi harian dan event.
 - **Security**: JWT Authentication untuk Admin.
 
-## Dokumentasi API 📖
+## Dokumentasi API 
 Akses Swagger UI di: **http://localhost:8000/docs**
 
 ## Auth admin (baru)
