@@ -1,4 +1,4 @@
-# Project Absensi API (Final)
+# Project Absensi API
 
 ## Setup
 Python 3.11
