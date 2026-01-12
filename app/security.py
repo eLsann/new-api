@@ -1,4 +1,4 @@
-from passlib.context import bcrypt
+import bcrypt
 import os
 from datetime import datetime, timedelta, timezone
 from jose import jwt

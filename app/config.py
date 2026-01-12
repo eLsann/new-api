@@ -8,11 +8,9 @@ class Settings:
     app_name: str = os.getenv("APP_NAME", "Project Absensi API")
     env: str = os.getenv("ENV", "dev")
 
-    # --- database ---
-    # simpan canonical di snake_case
+    # Database
     database_url: str = os.getenv("DATABASE_URL", "sqlite:///./absensi.db").strip()
 
-    # alias kompatibilitas (kalau ada kode lama pakai DATABASE_URL)
     @property
     def DATABASE_URL(self) -> str:
         return self.database_url
@@ -86,4 +84,4 @@ class Settings:
 settings = Settings()
 
 if not settings.secret_key:
-    raise RuntimeError("SECRET_KEY belum di-set. Isi SECRET_KEY di file .env")
+    raise RuntimeError("SECRET_KEY not set. Please configure it in .env file")

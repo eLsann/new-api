@@ -18,7 +18,6 @@ logger.info(f"Face recognition model loaded on device: {_DEVICE}")
 _CACHE = {"names": None, "vectors": None}
 
 def _csv_to_vec(s: str) -> np.ndarray:
-    # Use np.loadtxt for better NumPy compatibility
     from io import StringIO
     return np.loadtxt(StringIO(s), delimiter=',', dtype=np.float32)
 

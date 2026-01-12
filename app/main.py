@@ -1,6 +1,7 @@
 from dotenv import load_dotenv
 load_dotenv()
 
+from app.logging_config import setup_logging, get_logger
 setup_logging(app_name="absensi_api", log_level="INFO")
 logger = get_logger(__name__)
 
@@ -39,10 +40,9 @@ app = FastAPI(
 
 security = HTTPBearer()
 
-# --- CORS middleware ---
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # For desktop app - adjust in production
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -69,118 +69,13 @@ def verify_device(device_id: str, token: str) -> bool:
         return False
     return DEVICE_TOKEN_MAP.get(device_id) == token
 
-# --- routers ---
 app.include_router(admin_people_router)
 app.include_router(admin_logs_router)
 app.include_router(admin_corrections_router)
 app.include_router(admin_reports_router)
 app.include_router(admin_auth_router)
 
-from fastapi.responses import JSONResponse, HTMLResponse
 
-
-
-@app.get("/test-upload", response_class=HTMLResponse)
-def test_upload_page():
-    return """
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Absensi API Tester (Direct)</title>
-    <style>
-        body { font-family: sans-serif; max-width: 800px; margin: 2rem auto; padding: 0 1rem; }
-        .card { border: 1px solid #ccc; padding: 1.5rem; border-radius: 8px; margin-bottom: 2rem; }
-        .form-group { margin-bottom: 1rem; }
-        label { display: block; margin-bottom: 0.5rem; font-weight: bold; }
-        input[type="text"] { width: 100%; padding: 0.5rem; }
-        button { background: #007bff; color: white; border: none; padding: 0.5rem 1rem; cursor: pointer; border-radius: 4px; }
-        button:hover { background: #0056b3; }
-        #result { background: #f8f9fa; padding: 1rem; border-radius: 4px; white-space: pre-wrap; font-family: monospace; border: 1px solid #ddd; }
-        .hidden { display: none; }
-    </style>
-</head>
-<body>
-    <h1>📸 Absensi API Tester (Direct Route)</h1>
-    
-    <div class="card">
-        <h2>1. Konfigurasi Device</h2>
-        <div class="form-group">
-            <label>API URL:</label>
-            <input type="text" id="apiUrl" value="/v1/recognize">
-        </div>
-        <div class="form-group">
-            <label>Device Token (X-Device-Token):</label>
-            <input type="text" id="deviceToken" value="87654321">
-        </div>
-        <div class="form-group">
-            <label>Device ID (Optional, X-Device-Id):</label>
-            <input type="text" id="deviceId" value="stb-01">
-        </div>
-    </div>
-
-    <div class="card">
-        <h2>2. Test Recognize</h2>
-        <div class="form-group">
-            <label>Pilih Foto Wajah:</label>
-            <input type="file" id="fileInput" accept="image/*">
-        </div>
-        <button onclick="uploadImage()">🚀 Kirim Absensi</button>
-    </div>
-
-    <div id="resultCard" class="card hidden">
-        <h3>Hasil Response:</h3>
-        <pre id="result">Waiting...</pre>
-    </div>
-
-    <script>
-        async function uploadImage() {
-            const fileInput = document.getElementById('fileInput');
-            const resultDiv = document.getElementById('result');
-            const resultCard = document.getElementById('resultCard');
-
-            if (!fileInput.files[0]) {
-                alert("Pilih file dulu boss!");
-                return;
-            }
-
-            resultCard.classList.remove('hidden');
-            resultDiv.textContent = "Mengirim data...";
-
-            const formData = new FormData();
-            formData.append('file', fileInput.files[0]);
-
-            const headers = {
-                'X-Device-Token': document.getElementById('deviceToken').value,
-                'X-Device-Id': document.getElementById('deviceId').value
-            };
-
-            try {
-                const response = await fetch(document.getElementById('apiUrl').value, {
-                    method: 'POST',
-                    headers: headers,
-                    body: formData
-                });
-
-                const data = await response.json();
-                resultDiv.textContent = JSON.stringify(data, null, 2);
-                
-                if (!response.ok) {
-                    resultDiv.style.color = "red";
-                } else {
-                    resultDiv.style.color = "green";
-                }
-
-            } catch (error) {
-                resultDiv.textContent = "Error: " + error.message;
-                resultDiv.style.color = "red";
-            }
-        }
-    </script>
-</body>
-</html>
-    """
 
 
 @app.post("/v1/recognize")

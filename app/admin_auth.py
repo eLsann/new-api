@@ -8,7 +8,7 @@ from jose import jwt, JWTError
 from app.database import get_db
 from app.config import settings
 from app.models import AdminUser
-from app.security import verify_password  # Import from centralized security module
+from app.security import verify_password
 
 
 router = APIRouter(prefix="/admin", tags=["admin-auth"])
