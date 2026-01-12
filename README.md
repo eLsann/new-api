@@ -27,7 +27,7 @@ python create_admin.py
 
 Sistem Absensi Wajah Berbasis API dengan FastAPI, Facenet-PyTorch, dan SQLite.
 
-## Struktur Project 📂
+## Struktur Project 
 
 ```
 newApi/
@@ -49,14 +49,14 @@ Untuk MySQL, ubah `DATABASE_URL` di `.env`:
 DATABASE_URL=mysql+pymysql://user:password@localhost:3306/absensi_db
 ```
 
-## Fitur ✨
+## Fitur 
 
 - **Rekognisi Wajah**: Menggunakan Facenet (InceptionResnetV1)
 - **Anti-Spam**: Cooldown mechanism
 - **Reporting**: API untuk log absensi harian
 - **Security**: JWT Authentication untuk Admin
 
-## Dokumentasi API 📖
+## Dokumentasi API 
 
 Akses Swagger UI di: **http://localhost:8000/docs**
 
