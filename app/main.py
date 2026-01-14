@@ -189,3 +189,29 @@ def admin_rebuild_cache(
     logger.info("Rebuilding face recognition cache via admin request")
     rebuild_cache(db)
     return {"ok": True}
+
+@app.post("/admin/reset_attendance")
+def admin_reset_attendance(
+    db: Session = Depends(get_db),
+    _admin=Depends(get_current_admin)
+):
+    """Reset all attendance data (for demo purposes)"""
+    from app.models import AttendanceEvent, DailyAttendance
+    
+    logger.info("Resetting all attendance data (demo)")
+    
+    # Delete all attendance events
+    events_deleted = db.query(AttendanceEvent).delete()
+    
+    # Delete all daily attendance records
+    daily_deleted = db.query(DailyAttendance).delete()
+    
+    db.commit()
+    
+    logger.info(f"Reset complete: {events_deleted} events, {daily_deleted} daily records deleted")
+    
+    return {
+        "ok": True,
+        "events_deleted": events_deleted,
+        "daily_deleted": daily_deleted
+    }
