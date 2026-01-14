@@ -57,6 +57,7 @@ python -m uvicorn app.main:app --host 0.0.0.0 --port 8000
 |--------|----------|-----------|
 | POST | `/v1/recognize` | Pengenalan wajah |
 
+<<<<<<< HEAD
 ### Admin
 | Method | Endpoint | Deskripsi |
 |--------|----------|-----------|
@@ -70,6 +71,9 @@ python -m uvicorn app.main:app --host 0.0.0.0 --port 8000
 | POST | `/admin/reset_attendance` | Reset data absensi |
 | GET | `/admin/reports/monthly` | Laporan bulanan |
 | GET | `/admin/reports/export/csv` | Export CSV |
+=======
+## Struktur Project 
+>>>>>>> da24b9da029b10b44bb76a5bcf3832fab7db7845
 
 ## Struktur Database
 
@@ -81,8 +85,33 @@ python -m uvicorn app.main:app --host 0.0.0.0 --port 8000
 
 ## Teknologi
 
+<<<<<<< HEAD
 - FastAPI
 - SQLite/SQLAlchemy
 - DeepFace (ArcFace)
 - JWT Authentication
 - bcrypt
+=======
+Untuk MySQL, ubah `DATABASE_URL` di `.env`:
+```
+DATABASE_URL=mysql+pymysql://user:password@localhost:3306/absensi_db
+```
+
+## Fitur 
+
+- **Rekognisi Wajah**: Menggunakan Facenet (InceptionResnetV1)
+- **Anti-Spam**: Cooldown mechanism
+- **Reporting**: API untuk log absensi harian
+- **Security**: JWT Authentication untuk Admin
+
+## Dokumentasi API 
+
+Akses Swagger UI di: **http://localhost:8000/docs**
+
+## Auth Admin
+
+```
+POST /admin/login {"username", "password"} -> token
+Header: Authorization: Bearer <token>
+```
+>>>>>>> da24b9da029b10b44bb76a5bcf3832fab7db7845
