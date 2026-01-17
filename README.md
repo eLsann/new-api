@@ -1,5 +1,5 @@
 <p align="center">
-  <h1 align="center">🎯 Absensi API</h1>
+  <h1 align="center">Absensi API</h1>
   <p align="center">
     <strong>Backend API untuk Sistem Absensi Berbasis Pengenalan Wajah</strong>
   </p>
@@ -23,16 +23,16 @@
 
 | Fitur | Deskripsi |
 |-------|-----------|
-| 🎯 **MTCNN Detection** | Deteksi wajah akurat dengan face alignment otomatis |
-| 🧠 **FaceNet Recognition** | Deep learning model untuk pengenalan wajah (InceptionResnetV1) |
-| 📊 **Attendance Logic** | Jam masuk, pulang, keterlambatan, cooldown |
-| 🔐 **JWT Authentication** | Endpoint admin aman dengan token |
-| 📸 **Snapshot Storage** | Simpan foto absensi (opsional) |
-| 🗄️ **Dual Database** | Support MySQL dan SQLite |
+| **MTCNN Detection** | Deteksi wajah akurat dengan face alignment otomatis |
+| **FaceNet Recognition** | Deep learning model untuk pengenalan wajah (InceptionResnetV1) |
+| **Attendance Logic** | Jam masuk, pulang, keterlambatan, cooldown |
+| **JWT Authentication** | Endpoint admin aman dengan token |
+| **Snapshot Storage** | Simpan foto absensi (opsional) |
+| **Dual Database** | Support MySQL dan SQLite |
 
 ---
 
-## 🛠️ Tech Stack
+## Tech Stack
 
 <table>
 <tr>
@@ -44,7 +44,7 @@
 </tr>
 </table>
 
-### 📦 Libraries
+### Libraries
 
 ```
 facenet-pytorch    # MTCNN + FaceNet untuk face recognition
@@ -58,9 +58,9 @@ bcrypt             # Password hashing
 
 ---
 
-## 🚀 Quick Start
+## Quick Start
 
-### 1️⃣ Clone & Setup
+### Clone & Setup
 ```bash
 git clone https://github.com/your-username/new-api.git
 cd new-api
@@ -69,13 +69,13 @@ python -m venv .venv
 pip install -r requirements.txt
 ```
 
-### 2️⃣ Configure Environment
+### Configure Environment
 ```bash
 copy .env.example .env
 # Edit .env - wajib isi SECRET_KEY dan database
 ```
 
-### 3️⃣ Run Server
+### Run Server
 ```bash
 # Windows (1-click)
 .\run_api.bat
@@ -84,14 +84,14 @@ copy .env.example .env
 python -m uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
 ```
 
-### 4️⃣ Create Admin
+### Create Admin
 ```bash
 python scripts/create_admin.py
 ```
 
 ---
 
-## 📁 Struktur Project
+##Struktur Project
 
 ```
 newApi/
@@ -113,7 +113,7 @@ newApi/
 
 ---
 
-## ⚙️ Configuration
+## Configuration
 
 | Variable | Description | Default |
 |----------|-------------|---------|
@@ -125,7 +125,7 @@ newApi/
 
 ---
 
-## 📖 API Documentation
+## API Documentation
 
 Setelah server running, buka:
 - **Swagger UI**: http://localhost:8000/docs
@@ -134,7 +134,7 @@ Setelah server running, buka:
 
 ---
 
-## 🔧 Scripts Utility
+## Scripts Utility
 
 | Script | Fungsi |
 |--------|--------|
@@ -145,7 +145,7 @@ Setelah server running, buka:
 
 ---
 
-## 🤝 Contributing
+## Contributing
 
 1. Fork repository
 2. Create feature branch (`git checkout -b feature/AmazingFeature`)
@@ -155,12 +155,12 @@ Setelah server running, buka:
 
 ---
 
-## 📄 License
+## License
 
 Distributed under the **MIT License**. See `LICENSE` for more information.
 
 ---
 
 <p align="center">
-  <sub>Built with ❤️ for Tugas Akhir Project</sub>
+  <sub>elsann</sub>
 </p>
