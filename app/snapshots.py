@@ -1,7 +1,9 @@
 import os
 from datetime import datetime, timezone
 from app.config import settings
-from app.utils import ensure_dir
+
+def ensure_dir(path: str):
+    os.makedirs(path, exist_ok=True)
 
 def save_snapshot_bytes(img_bytes: bytes, *, reason: str, device_id: str) -> str:
     ensure_dir(settings.snapshot_dir)

@@ -35,8 +35,8 @@ class Settings:
         return self.device_tokens
 
     # --- face recognition ---
-    max_distance: float = float(os.getenv("MAX_DISTANCE", "0.95"))
-    min_face_px: int = int(os.getenv("MIN_FACE_PX", "90"))
+    max_distance: float = float(os.getenv("MAX_DISTANCE", "1.1"))
+    min_face_px: int = int(os.getenv("MIN_FACE_PX", "50"))
 
     @property
     def MAX_DISTANCE(self) -> float:

@@ -14,4 +14,5 @@ bcrypt>=4.0.1
 tzdata>=2023.3
 pytest>=7.0.0
 httpx>=0.24.0
-# pymysql>=1.1.0  # Uncomment if using MySQL instead of SQLite
+pymysql>=1.1.0  # Required for MySQL/MariaDB
+# mysql-connector-python>=8.0.0  # Alternative driver

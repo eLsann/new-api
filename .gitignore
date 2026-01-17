@@ -8,8 +8,9 @@ __pycache__/
 .venv/
 venv/
 ENV/
+app.venv/
 
-# Environment
+# Environment (contains secrets)
 .env
 
 # Database
@@ -32,3 +33,4 @@ Thumbs.db
 
 # App specific
 data/snapshots/
+init_mysql.py

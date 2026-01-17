@@ -13,7 +13,7 @@ from sqlalchemy.orm import Session
 from app.config import settings
 from app.database import Base, engine, get_db
 from app.policy import get_policy
-from app.recog import identify, rebuild_cache
+from app.recog import identify_multiple, rebuild_cache
 from app.attendance import decide_and_record
 from app.snapshots import save_snapshot_bytes
 
@@ -27,6 +27,7 @@ Base.metadata.create_all(bind=engine)
 
 from fastapi.security import HTTPBearer
 from pathlib import Path
+import os
 
 
 app = FastAPI(
@@ -37,6 +38,19 @@ app = FastAPI(
         "clientId": "fastapi-demo"
     }
 )
+
+@app.on_event("startup")
+async def startup_event():
+    # Check DB Connection
+    logger.info(f"Starting up in {settings.env} mode")
+    if "mysql" in settings.database_url:
+        logger.info("Using MySQL Database (Laragon compatible)")
+    else:
+        logger.info("Using SQLite Database")
+    
+    # Ensure data dirs exist
+    os.makedirs(settings.snapshot_dir, exist_ok=True)
+    os.makedirs("./logs", exist_ok=True)
 
 security = HTTPBearer()
 
@@ -76,109 +90,105 @@ app.include_router(admin_reports_router)
 app.include_router(admin_auth_router)
 
 
+@app.get("/health")
+def health_check():
+    """Health check endpoint for monitoring"""
+    return {"status": "ok", "service": "Absensi API"}
 
 
-@app.post("/v1/recognize")
-async def v1_recognize(
+@app.post("/v1/recognize_multi")
+async def v1_recognize_multi(
     file: UploadFile = File(...),
     x_device_id: str = Header(default=""),
     x_device_token: str = Header(default=""),
     db: Session = Depends(get_db),
 ):
-    logger.info(f"Recognition request from device: {x_device_id}")
+    """Recognize multiple faces (max 5) in a single image"""
+    from app.recog import identify_multiple
+    
+    logger.info(f"Multi-face recognition request from device: {x_device_id}")
     
     if not verify_device(x_device_id, x_device_token):
         logger.warning(f"Unauthorized device access attempt: {x_device_id}")
         raise HTTPException(status_code=401, detail="Unauthorized device")
 
     img_bytes = await file.read()
-
-    try:
-        ident = identify(img_bytes=img_bytes, db=db)
-    except ValueError as e:
-        logger.error(f"Image processing error from device {x_device_id}: {str(e)}")
-        return JSONResponse(
-            {
-                "status": "reject",
-                "device_id": x_device_id,
-                "name": None,
-                "distance": None,
-                "event_type": None,
-                "late": False,
-                "audio_text": "Gagal memproses gambar.",
-                "reason": str(e),
-            },
-            status_code=400,
-        )
-
-    status = ident["status"]
-    dist = ident["distance"]
-
-    # Snapshot logic
-    snapshot_path = None
-    if settings.save_snapshots:
-        if settings.snapshot_on_unknown and status == "unknown":
-            snapshot_path = save_snapshot_bytes(img_bytes, reason="unknown", device_id=x_device_id)
-        if settings.snapshot_on_low_conf and status == "ok" and dist is not None and dist > settings.low_conf_distance:
-            snapshot_path = save_snapshot_bytes(img_bytes, reason="lowconf", device_id=x_device_id)
-
-    # unknown/reject/error -> log as event (so admin can review)
-    if status != "ok":
-        # store as event without daily update
-        policy = get_policy(db)
-        out = decide_and_record(
-            db,
-            person_name="",
-            device_id=x_device_id,
-            distance=dist,
-            status=status,
-            policy_timezone=policy.timezone,
-            in_start_time=policy.in_start_time,
-            late_after_time=policy.late_after_time,
-            out_start_time=policy.out_start_time,
-            snapshot_path=snapshot_path,
-        )
-        audio_text = "Wajah tidak dikenali." if status == "unknown" else "Gagal memproses gambar."
-        return JSONResponse(
-            {
-                "status": out["status"],
-                "device_id": x_device_id,
-                "name": None,
-                "distance": dist,
-                "event_type": None,
-                "late": False,
-                "audio_text": audio_text,
-                "reason": ident.get("reason"),
-            }
-        )
-
-    policy = get_policy(db)
-
-    out = decide_and_record(
-        db,
-        person_name=ident["name"],
-        device_id=x_device_id,
-        distance=dist,
-        status="ok",
-        policy_timezone=policy.timezone,
-        in_start_time=policy.in_start_time,
-        late_after_time=policy.late_after_time,
-        out_start_time=policy.out_start_time,
-        snapshot_path=snapshot_path,
-    )
-
-    return JSONResponse(
-        {
-            "status": out["status"],
+    
+    # Detect and identify all faces
+    result = identify_multiple(img_bytes, db, max_faces=5)
+    
+    if result["status"] == "no_face":
+        return JSONResponse({
+            "status": "no_face",
             "device_id": x_device_id,
-            "name": ident["name"],
-            "distance": dist,
-            "event_type": out["event_type"],
-            "late": bool(out["is_late"]) if out["event_type"] == "IN" else False,
-            "audio_text": out["audio_text"],
-            "reason": None,
-        }
-    )
+            "faces": [],
+            "recognized_names": [],
+            "combined_audio": None
+        })
+    
+    # Process attendance for each recognized face
+    policy = get_policy(db)
+    processed_faces = []
+    attendance_results = []
+    
+    for face in result["faces"]:
+        if face["status"] == "ok" and face["name"]:
+            # Record attendance for this person
+            out = decide_and_record(
+                db,
+                person_name=face["name"],
+                device_id=x_device_id,
+                distance=face["distance"],
+                status="ok",
+                policy_timezone=policy.timezone,
+                in_start_time=policy.in_start_time,
+                late_after_time=policy.late_after_time,
+                out_start_time=policy.out_start_time,
+                snapshot_path=None,
+            )
+            
+            processed_faces.append({
+                "queue_id": face["queue_id"],
+                "bbox": face["bbox"],
+                "name": face["name"],
+                "status": out["status"],
+                "event_type": out["event_type"],
+                "late": bool(out.get("is_late", False))
+            })
+            
+            if out["status"] == "ok":
+                attendance_results.append({
+                    "name": face["name"],
+                    "event_type": out["event_type"],
+                    "late": bool(out.get("is_late", False))
+                })
+        else:
+            processed_faces.append({
+                "queue_id": face["queue_id"],
+                "bbox": face["bbox"],
+                "name": None,
+                "status": face["status"],
+                "event_type": None,
+                "late": False
+            })
+    
+    # Combined audio generation is handled by the Desktop Client now
+    # We just return the structured data
+    
+    recognized_names = [res["name"] for res in attendance_results]
+    
+    logger.info(f"Multi-face: {len(processed_faces)} faces, {len(recognized_names)} recorded")
+    
+    return JSONResponse({
+        "status": "ok",
+        "device_id": x_device_id,
+        "faces": processed_faces,
+        "recognized_names": recognized_names,
+        "combined_audio": None
+    })
+
+
+
 
 @app.post("/admin/rebuild_cache")
 def admin_rebuild_cache(
@@ -189,6 +199,36 @@ def admin_rebuild_cache(
     logger.info("Rebuilding face recognition cache via admin request")
     rebuild_cache(db)
     return {"ok": True}
+
+@app.post("/admin/cleanup")
+def admin_cleanup(
+    days: int = 30,
+    db: Session = Depends(get_db),
+    _admin=Depends(get_current_admin)
+):
+    """Trigger cleanup of old data (snapshots & logs)"""
+    import subprocess
+    import sys
+    
+    script_path = Path(__file__).parent.parent / "scripts" / "cleanup.py"
+    
+    logger.info(f"Triggering cleanup for files older than {days} days")
+    
+    # Run script as subprocess to ensure clean execution context
+    try:
+        result = subprocess.run(
+            [sys.executable, str(script_path), "--days", str(days)],
+            capture_output=True,
+            text=True
+        )
+        return {
+            "ok": True,
+            "stdout": result.stdout,
+            "stderr": result.stderr
+        }
+    except Exception as e:
+        logger.error(f"Cleanup failed: {e}")
+        return {"ok": False, "error": str(e)}
 
 @app.post("/admin/reset_attendance")
 def admin_reset_attendance(
