@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 
 from app.database import get_db
 from app.models import Person, Embedding
-from app.recog import embed_face, rebuild_cache
+from app.recog import embed_face, rebuild_cache, detect_faces_from_bgr
 from app.admin_auth import get_current_admin  # JWT dependency
 
 router = APIRouter(prefix="/admin", tags=["admin"])
@@ -116,12 +116,24 @@ async def enroll_person(
             scale = 1000 / max(h, w)
             bgr = cv2.resize(bgr, (int(w * scale), int(h * scale)))
 
-        # Generate augmented images
-        aug_images = augment_image(bgr)
+        # FIXED: Detect face FIRST, then augment and embed the face crop
+        # This matches the recognition flow for consistent embeddings
+        faces = detect_faces_from_bgr(bgr, max_faces=1)
         
-        for aug_img in aug_images:
+        if not faces:
+            # No face detected in this image
+            skipped += 1
+            continue
+        
+        # Get the face crop (already aligned by detect_faces_from_bgr)
+        face_crop = faces[0]["crop"]
+        
+        # Generate augmented versions of the FACE CROP (not full image)
+        aug_faces = augment_image(face_crop)
+        
+        for aug_face in aug_faces:
             try:
-                emb = embed_face(aug_img)
+                emb = embed_face(aug_face)
                 db.add(Embedding(person_id=person.id, vec_csv=_vec_to_csv(emb)))
                 augmented_count += 1
             except Exception:
