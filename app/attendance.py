@@ -1,7 +1,7 @@
 """
 Attendance Logic with Time Rules
-- IN: anytime, but late if after 08:00
-- OUT: only allowed 14:00 - 16:00
+- IN: anytime, but late if after late_after_time (from policy)
+- OUT: only allowed between out_start_time and out_end_time (from policy)
 - Only record successful events (status ok)
 """
 from datetime import datetime, time as dtime, timedelta, timezone
@@ -11,10 +11,14 @@ from sqlalchemy.orm import Session
 from app.config import settings
 from app.models import DailyAttendance, AttendanceEvent
 
-# Time configuration
-LATE_AFTER = dtime(8, 0)    # Late if check-in after 08:00
-OUT_START = dtime(14, 0)    # OUT allowed from 14:00
-OUT_END = dtime(16, 0)      # OUT allowed until 16:00
+
+def _parse_time(time_str: str) -> dtime:
+    """Parse time string HH:MM to datetime.time object"""
+    try:
+        parts = time_str.strip().split(":")
+        return dtime(int(parts[0]), int(parts[1]))
+    except (ValueError, IndexError):
+        return dtime(8, 0)  # Default fallback
 
 
 def decide_and_record(
@@ -28,13 +32,19 @@ def decide_and_record(
     in_start_time: str,
     late_after_time: str,
     out_start_time: str,
+    out_end_time: str = "17:00",  # New parameter with default
     snapshot_path: str | None = None,
 ) -> dict:
     """
-    Attendance logic with time rules:
-    - IN: always allowed, late label if after 08:00
-    - OUT: only allowed 14:00 - 16:00
+    Attendance logic with time rules (from policy):
+    - IN: always allowed, late label if after late_after_time
+    - OUT: only allowed between out_start_time and out_end_time
     """
+    # Parse policy times dynamically
+    LATE_AFTER = _parse_time(late_after_time)
+    OUT_START = _parse_time(out_start_time)
+    OUT_END = _parse_time(out_end_time)
+    
     tz = ZoneInfo(policy_timezone)
     now_local = datetime.now(tz=tz)
     day_str = now_local.date().isoformat()

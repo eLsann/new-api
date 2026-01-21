@@ -23,6 +23,7 @@ class AttendancePolicy(Base):
     in_start_time: Mapped[str] = mapped_column(String(5), default="05:00")
     late_after_time: Mapped[str] = mapped_column(String(5), default="08:00")
     out_start_time: Mapped[str] = mapped_column(String(5), default="15:00")
+    out_end_time: Mapped[str] = mapped_column(String(5), default="17:00")  # NEW: OUT window end
     retention_days: Mapped[int] = mapped_column(Integer, default=60)
     updated_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(timezone.utc).replace(tzinfo=None))
 

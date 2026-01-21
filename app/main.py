@@ -144,6 +144,7 @@ async def v1_recognize_multi(
                 in_start_time=policy.in_start_time,
                 late_after_time=policy.late_after_time,
                 out_start_time=policy.out_start_time,
+                out_end_time=policy.out_end_time,  # NEW: pass out_end_time from policy
                 snapshot_path=None,
             )
             

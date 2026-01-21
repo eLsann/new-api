@@ -10,6 +10,7 @@ class PolicyData:
     in_start_time: str = "05:00"
     late_after_time: str = "08:00"
     out_start_time: str = "15:00"
+    out_end_time: str = "17:00"  # NEW: OUT window end
     retention_days: int = 60
 
 _CACHE = {"policy": None, "built_at": 0.0}
@@ -33,6 +34,7 @@ def get_policy(db: Session) -> PolicyData:
         in_start_time=policy_row.in_start_time,
         late_after_time=policy_row.late_after_time,
         out_start_time=policy_row.out_start_time,
+        out_end_time=getattr(policy_row, 'out_end_time', '17:00'),  # Handle old DB without column
         retention_days=policy_row.retention_days,
     )
     
