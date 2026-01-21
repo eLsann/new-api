@@ -23,7 +23,7 @@ _MTCNN = MTCNN(
     device=_DEVICE,
     post_process=False,
     min_face_size=80,
-    thresholds=[0.7, 0.8, 0.9]  # Stricter thresholds for better accuracy
+    thresholds=[0.6, 0.7, 0.8]  # 3 thresholds for P-Net, R-Net, O-Net stages
 )
 logger.info("MTCNN face detector initialized")
 
@@ -97,6 +97,68 @@ def _preprocess(face_bgr: np.ndarray) -> torch.Tensor:
 def embed_face(face_bgr: np.ndarray) -> np.ndarray:
     t = _preprocess(face_bgr)
     return _MODEL(t).cpu().numpy().astype(np.float32)[0]
+
+
+def detect_faces_from_bgr(bgr: np.ndarray, max_faces: int = 1) -> list:
+    """
+    Detect faces from BGR numpy array (for enroll process).
+    Returns list of face crops with alignment applied.
+    """
+    rgb = cv2.cvtColor(bgr, cv2.COLOR_BGR2RGB)
+    
+    # Use MTCNN to detect faces and landmarks
+    boxes, probs, landmarks = _MTCNN.detect(rgb, landmarks=True)
+    
+    if boxes is None or len(boxes) == 0:
+        return []
+    
+    results = []
+    valid_faces = []
+    
+    # Filter by probability and collect valid faces
+    for i, (box, prob, lm) in enumerate(zip(boxes, probs, landmarks)):
+        if prob < 0.9:  # Skip low confidence detections
+            continue
+        valid_faces.append((box, prob, lm))
+    
+    if not valid_faces:
+        return []
+    
+    # Limit to max_faces
+    valid_faces = valid_faces[:max_faces]
+    
+    for i, (box, prob, lm) in enumerate(valid_faces):
+        x1, y1, x2, y2 = [int(v) for v in box]
+        
+        # Clamp to image bounds
+        h, w = bgr.shape[:2]
+        x1 = max(0, x1)
+        y1 = max(0, y1)
+        x2 = min(w, x2)
+        y2 = min(h, y2)
+        
+        # Add padding
+        pad_w = int(0.15 * (x2 - x1))
+        pad_h = int(0.15 * (y2 - y1))
+        x1_pad = max(0, x1 - pad_w)
+        y1_pad = max(0, y1 - pad_h)
+        x2_pad = min(w, x2 + pad_w)
+        y2_pad = min(h, y2 + pad_h)
+        
+        # Align face using landmarks before cropping
+        aligned_rgb = _align_face(rgb, lm)
+        aligned_bgr = cv2.cvtColor(aligned_rgb, cv2.COLOR_RGB2BGR)
+        
+        # Crop from aligned image
+        crop = aligned_bgr[y1_pad:y2_pad, x1_pad:x2_pad]
+        
+        results.append({
+            "crop": crop,
+            "confidence": float(prob),
+            "bbox": [x1, y1, x2, y2]
+        })
+    
+    return results
 
 
 def detect_faces(img_bytes: bytes, max_faces: int = 5) -> list:
