@@ -52,6 +52,12 @@ async def startup_event():
     os.makedirs(settings.snapshot_dir, exist_ok=True)
     os.makedirs("./logs", exist_ok=True)
 
+
+@app.get("/health")
+async def health_check():
+    """Health check endpoint for Railway/monitoring"""
+    return {"status": "healthy", "version": "2.0.0"}
+
 security = HTTPBearer()
 
 app.add_middleware(
