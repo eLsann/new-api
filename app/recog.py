@@ -23,7 +23,7 @@ _MTCNN = MTCNN(
     device=_DEVICE,
     post_process=False,
     min_face_size=80,
-    thresholds=[0.6, 0.7, 0.8]  # 3 thresholds for P-Net, R-Net, O-Net stages
+    thresholds=(0.6, 0.7, 0.8)  # 3 thresholds for P-Net, R-Net, O-Net stages
 )
 logger.info("MTCNN face detector initialized")
 
@@ -110,6 +110,11 @@ def _detect_faces_internal(bgr: np.ndarray, max_faces: int = 5, sort_left_to_rig
         include_queue_id: Include queue_id in results
     """
     rgb = cv2.cvtColor(bgr, cv2.COLOR_BGR2RGB)
+    
+    # Defensive Fix: Validate thresholds to prevent IndexError
+    if isinstance(_MTCNN.thresholds, list) and len(_MTCNN.thresholds) < 3:
+        logger.warning(f"MTCNN thresholds corrupted (len={len(_MTCNN.thresholds)}). Resetting to defaults.")
+        _MTCNN.thresholds = [0.6, 0.7, 0.8]
     
     # Use MTCNN to detect faces and landmarks
     boxes, probs, landmarks = _MTCNN.detect(rgb, landmarks=True)
