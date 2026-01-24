@@ -15,4 +15,5 @@ tzdata>=2023.3
 pytest>=7.0.0
 httpx>=0.24.0
 pymysql>=1.1.0  # Required for MySQL/MariaDB
+typing_extensions>=4.12.0  # Required for Pydantic v2
 # mysql-connector-python>=8.0.0  # Alternative driver
