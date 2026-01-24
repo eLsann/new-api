@@ -18,6 +18,8 @@ echo [INFO] Mengaktifkan virtual environment...
 call .venv\Scripts\activate.bat
 
 echo [INFO] Menjalankan server...
+echo [INFO] Akses API di: http://localhost:8000
+echo [INFO] Dokumentasi:  http://localhost:8000/docs
 python -m uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
 
 pause
