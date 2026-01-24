@@ -144,6 +144,14 @@ Setelah server running, buka:
 | `scripts/generate_key.py` | Generate SECRET_KEY baru |
 
 ---
+
+## Troubleshooting
+
+### Windows Browser "This site can’t be reached"
+Jika Anda membuka `http://0.0.0.0:8000` di browser Windows, Anda akan mendapat error.
+**Solusi**: Gunakan **http://localhost:8000** sebagai gantinya.
+
+---
 <p align="center">
   <sub>elsann</sub>
 </p>
