@@ -1,0 +1,45 @@
+services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: absensi-api
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./data:/app/data
+      - ./logs:/app/logs
+      - ./.env:/app/.env
+    restart: always
+    depends_on:
+      - db
+    environment:
+      - ENV=${ENV:-production}
+      - TZ=${TZ:-Asia/Jakarta}
+      # Database URL from env (safe for public repo)
+      - DATABASE_URL=mysql+pymysql://${DB_USER:-root}:${DB_PASSWORD:-root}@db:3306/${DB_NAME:-absensi}
+
+  db:
+    image: mysql:8.0
+    container_name: absensi-db
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD:-root}
+      MYSQL_DATABASE: ${DB_NAME:-absensi}
+    ports:
+      - "3306:3306"
+    volumes:
+      # Map folder mysql lokal untuk persistensi data agar tidak hilang saat restart
+      - ./mysql_data:/var/lib/mysql
+
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    container_name: absensi-pma
+    restart: always
+    environment:
+      PMA_HOST: db
+      UPLOAD_LIMIT: 64M
+    ports:
+      - "8080:80"
+    depends_on:
+      - db
