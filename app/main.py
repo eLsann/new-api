@@ -1,4 +1,5 @@
 from dotenv import load_dotenv
+import os
 load_dotenv()
 
 from app.logging_config import setup_logging, get_logger
@@ -23,11 +24,11 @@ from app.admin_corrections import router as admin_corrections_router
 from app.admin_reports import router as admin_reports_router
 from app.admin_auth import router as admin_auth_router, get_current_admin
 
+
 Base.metadata.create_all(bind=engine)
 
 from fastapi.security import HTTPBearer
 from pathlib import Path
-import os
 
 
 app = FastAPI(
@@ -43,14 +44,62 @@ app = FastAPI(
 async def startup_event():
     # Check DB Connection
     logger.info(f"Starting up in {settings.env} mode")
+    
+    # Wait for Database Connection
+    import time
+    from sqlalchemy.exc import OperationalError
+    
+    max_retries = 30
+    retry_interval = 2
+    
+    for i in range(max_retries):
+        try:
+            # Try to create a connection
+            with engine.connect() as conn:
+                pass
+            logger.info("Database connection established.")
+            break
+        except OperationalError as e:
+            if i < max_retries - 1:
+                logger.warning(f"Database not ready yet, retrying in {retry_interval}s... ({i+1}/{max_retries})")
+                time.sleep(retry_interval)
+            else:
+                logger.error("Could not connect to database after multiple retries.")
+                raise e
+
     if "mysql" in settings.database_url:
-        logger.info("Using MySQL Database (Laragon compatible)")
+        logger.info("Using MySQL Database")
     else:
         logger.info("Using SQLite Database")
     
     # Ensure data dirs exist
     os.makedirs(settings.snapshot_dir, exist_ok=True)
     os.makedirs("./logs", exist_ok=True)
+
+    # Auto-create default admin if none exists
+    try:
+        from app.database import SessionLocal
+        from app.models import AdminUser
+        from app.security import hash_password
+        
+        db = SessionLocal()
+        existing_admin = db.query(AdminUser).first()
+        if not existing_admin:
+            logger.info("No admin found. Creating default admin account.")
+            default_admin_user = settings.default_admin_user
+            default_admin_pass = settings.default_admin_password
+            
+            new_admin = AdminUser(
+                username=default_admin_user,
+                password_hash=hash_password(default_admin_pass),
+                is_active=True
+            )
+            db.add(new_admin)
+            db.commit()
+            logger.info(f"Default admin created: {default_admin_user} / {default_admin_pass}")
+        db.close()
+    except Exception as e:
+        logger.error(f"Failed to check/create default admin: {e}")
 
 
 @app.get("/health")
