@@ -1,157 +1,91 @@
-<p align="center">
-  <h1 align="center">Absensi API</h1>
-  <p align="center">
-    <strong>Backend API untuk Sistem Absensi Berbasis Pengenalan Wajah</strong>
-  </p>
-</p>
+# Absensi AI API
 
-<p align="center">
-  <img src="https://img.shields.io/badge/Python-3.10+-3776AB?style=for-the-badge&logo=python&logoColor=white" alt="Python">
-  <img src="https://img.shields.io/badge/FastAPI-0.100+-009688?style=for-the-badge&logo=fastapi&logoColor=white" alt="FastAPI">
-  <img src="https://img.shields.io/badge/PyTorch-2.0+-EE4C2C?style=for-the-badge&logo=pytorch&logoColor=white" alt="PyTorch">
-  <img src="https://img.shields.io/badge/MySQL-8.0+-4479A1?style=for-the-badge&logo=mysql&logoColor=white" alt="MySQL">
-</p>
+![Python](https://img.shields.io/badge/python-3.10-blue.svg)
+![FastAPI](https://img.shields.io/badge/FastAPI-0.100.0-009688.svg?style=flat&logo=fastapi&logoColor=white)
+![Docker](https://img.shields.io/badge/docker-%230db7ed.svg?style=flat&logo=docker&logoColor=white)
+![MySQL](https://img.shields.io/badge/mysql-%2300f.svg?style=flat&logo=mysql&logoColor=white)
+![PyTorch](https://img.shields.io/badge/PyTorch-%23EE4C2C.svg?style=flat&logo=PyTorch&logoColor=white)
 
-<p align="center">
-  <img src="https://img.shields.io/badge/License-MIT-green?style=flat-square" alt="License">
-  <img src="https://img.shields.io/badge/Status-Production%20Ready-brightgreen?style=flat-square" alt="Status">
-</p>
+Backend API untuk sistem absensi cerdas berbasis pengenalan wajah (Face Recognition). Dibangun untuk efisiensi, skalabilitas, dan kemudahan deployment menggunakan teknologi containerisasi modern.
 
----
+## Tentang Project
 
-## Fitur Utama
+Sistem ini dirancang untuk menangani proses absensi otomatis menggunakan kamera (CCTV/Webcam) dengan memanfaatkan Deep Learning untuk identifikasi wajah.
 
-| Fitur | Deskripsi |
-|-------|-----------|
-| **MTCNN Detection** | Deteksi wajah akurat dengan face alignment otomatis |
-| **FaceNet Recognition** | Deep learning model untuk pengenalan wajah (InceptionResnetV1) |
-| **Attendance Logic** | Jam masuk, pulang, keterlambatan, cooldown |
-| **JWT Authentication** | Endpoint admin aman dengan token |
-| **Snapshot Storage** | Simpan foto absensi (opsional) |
-| **Dual Database** | Support MySQL dan SQLite |
+### Fitur Utama
+*   **High Accuracy Face Recognition**: Menggunakan arsitektur Inception Resnet V1 (FaceNet) pre-trained pada dataset VGGFace2.
+*   **Fast API Response**: Dibangun di atas FastAPI yang menawarkan performa tinggi (asynchronous).
+*   **Anti-Spoofing Dasar**: Mekanisme validasi jarak euclidean dan confidence score.
+*   **Containerized Environment**: Siap dijalankan di mana saja (Home Server, Cloud, Mini PC) tanpa "dependency hell".
+*   **Database Agnostic**: Mendukung MySQL (Production) dan SQLite (Development/Test).
+*   **Admin Dashboard Ready**: Terintegrasi dengan phpMyAdmin untuk manajemen data visual.
 
----
+## Arsitektur Teknologi
 
-## Tech Stack
+*   **Framework**: FastAPI, Uvicorn
+*   **ML Core**: PyTorch, Facenet-PyTorch, OpenCV
+*   **Database**: MySQL 8.0, SQLAlchemy ORM
+*   **Infrastructure**: Docker, Docker Compose
 
-<table>
-<tr>
-<td align="center"><img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/python/python-original.svg" width="40"/><br>Python</td>
-<td align="center"><img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/fastapi/fastapi-original.svg" width="40"/><br>FastAPI</td>
-<td align="center"><img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/pytorch/pytorch-original.svg" width="40"/><br>PyTorch</td>
-<td align="center"><img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/mysql/mysql-original.svg" width="40"/><br>MySQL</td>
-<td align="center"><img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/opencv/opencv-original.svg" width="40"/><br>OpenCV</td>
-</tr>
-</table>
+## Persiapan (Prerequisites)
 
-### Libraries
+Sebelum memulai, pastikan sistem Anda memiliki:
+*   [Docker Desktop](https://www.docker.com/products/docker-desktop) (Wajib untuk deployment mudah)
+*   Git
 
-```
-facenet-pytorch    # MTCNN + FaceNet untuk face recognition
-fastapi            # Web framework API
-uvicorn            # ASGI server
-sqlalchemy         # ORM database
-pymysql            # MySQL connector
-python-jose        # JWT authentication
-bcrypt             # Password hashing
-```
+## Panduan Instalasi (Deployment)
 
----
+Kami merekomendasikan penggunaan Docker untuk isolasi yang sempurna.
 
-## Quick Start
-
-### Clone & Setup
+### 1. Clone Repository
 ```bash
-git clone https://github.com/your-username/new-api.git
-cd new-api
+git clone https://github.com/username/api-absensi.git
+cd api-absensi
+```
+
+### 2. Konfigurasi Environment
+Duplikasi file contoh konfigurasi:
+```bash
+cp .env.example .env
+# Windows: copy .env.example .env
+```
+Secara default, konfigurasi ini sudah siap jalan (Zero-Config) dengan kredensial default.
+*   **Security Note**: Untuk production, ubah `SECRET_KEY` dan password database di file `.env` ini.
+
+### 3. Jalankan Server
+Gunakan perintah Docker Compose untuk membangun dan menjalankan container:
+```bash
+docker-compose up -d --build
+```
+
+Layanan akan tersedia di:
+*   **API Root**: `http://localhost:8000`
+*   **API Documentation (Swagger)**: `http://localhost:8000/docs`
+*   **Database Admin**: `http://localhost:8080` (User: `root`, Pass: `root`)
+
+## Pengembangan Lokal (Manual)
+
+Jika Anda perlu menjalankan tanpa Docker untuk keperluan debugging:
+
+```bash
+# Buat Virtual Environment
 python -m venv .venv
-.\.venv\Scripts\activate
+source .venv/bin/activate  # Windows: .venv\Scripts\activate
+
+# Install Dependencies
 pip install -r requirements.txt
+
+# Jalankan Server (Dev Mode)
+python -m uvicorn app.main:app --reload
 ```
 
-### Configure Environment
-```bash
-copy .env.example .env
-# Edit .env - wajib isi SECRET_KEY dan database
-```
+## Struktur Project
 
-### Run Server
-```bash
-# Windows (1-click)
-.\run_api.bat
+*   `/app`: Source code utama API.
+*   `/scripts`: Alat bantu migrasi dan maintenance.
+*   `/data`: Direktori untuk menyimpan file snapshot wajah.
+*   `docker-compose.yml`: Orkestrasi service (API + Database).
 
-# Manual
-python -m uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
-```
+## Lisensi
 
-### Create Admin
-```bash
-python scripts/create_admin.py
-```
-
----
-
-##Struktur Project
-
-```
-newApi/
-├── 📂 app/
-│   ├── main.py           # FastAPI entry point
-│   ├── recog.py          # MTCNN + FaceNet recognition
-│   ├── config.py         # Environment config
-│   ├── models.py         # SQLAlchemy models
-│   └── admin_*.py        # Admin endpoints
-├── 📂 scripts/
-│   ├── create_admin.py   # Create admin account
-│   ├── full_reset.py     # Factory reset
-│   └── cleanup.py        # Clean old data
-├── 📂 data/snapshots/    # Attendance photos
-├── 📄 .env.example       # Environment template
-├── 📄 requirements.txt   # Dependencies
-└── 📄 run_api.bat        # 1-click launcher
-```
-
----
-
-## Configuration
-
-| Variable | Description | Default |
-|----------|-------------|---------|
-| `DATABASE_URL` | MySQL/SQLite connection string | sqlite:///./absensi.db |
-| `SECRET_KEY` | JWT signing key (**REQUIRED**) | - |
-| `MAX_DISTANCE` | Face match threshold | 0.85 |
-| `MIN_FACE_PX` | Minimum face size | 80 |
-| `COOLDOWN_SECONDS` | Between same-person scans | 45 |
-
----
-
-## API Documentation
-
-Setelah server running, buka:
-- **Swagger UI**: http://localhost:8000/docs
-- **ReDoc**: http://localhost:8000/redoc
-- **Health Check**: http://localhost:8000/health
-
----
-
-## Scripts Utility
-
-| Script | Fungsi |
-|--------|--------|
-| `scripts/create_admin.py` | Buat akun admin baru |
-| `scripts/full_reset.py` | Factory reset (hapus semua data) |
-| `scripts/cleanup.py` | Bersihkan snapshot & log lama |
-| `scripts/generate_key.py` | Generate SECRET_KEY baru |
-
----
-
-## Troubleshooting
-
-### Windows Browser "This site can’t be reached"
-Jika Anda membuka `http://0.0.0.0:8000` di browser Windows, Anda akan mendapat error.
-**Solusi**: Gunakan **http://localhost:8000** sebagai gantinya.
-
----
-<p align="center">
-  <sub>elsann</sub>
-</p>
+Project ini dilisensikan di bawah [MIT License](LICENSE).
