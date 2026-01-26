@@ -6,10 +6,12 @@ load_dotenv()
 class Settings:
     # --- app ---
     app_name: str = os.getenv("APP_NAME", "Project Absensi API")
-    env: str = os.getenv("ENV", "dev")
+    env: str = os.getenv("ENV", "production")
+    timezone: str = os.getenv("TZ", "Asia/Jakarta") # Default to Jakarta for home server
+
 
     # Database
-    database_url: str = os.getenv("DATABASE_URL", "sqlite:///./absensi.db").strip()
+    database_url: str = os.getenv("DATABASE_URL", "mysql+pymysql://root:root@db:3306/absensi").strip()
 
     @property
     def DATABASE_URL(self) -> str:
@@ -18,6 +20,8 @@ class Settings:
     # --- security/admin ---
     secret_key: str = os.getenv("SECRET_KEY", "").strip()
     admin_token_expire_hours: int = int(os.getenv("ADMIN_TOKEN_EXPIRE_HOURS", "12"))
+    default_admin_user: str = os.getenv("DEFAULT_ADMIN_USER", "admin")
+    default_admin_password: str = os.getenv("DEFAULT_ADMIN_PASSWORD", "admin123")
 
     @property
     def SECRET_KEY(self) -> str:
@@ -26,6 +30,14 @@ class Settings:
     @property
     def ADMIN_TOKEN_EXPIRE_HOURS(self) -> int:
         return self.admin_token_expire_hours
+
+    @property
+    def DEFAULT_ADMIN_USER(self) -> str:
+        return self.default_admin_user
+
+    @property
+    def DEFAULT_ADMIN_PASSWORD(self) -> str:
+        return self.default_admin_password
 
     # --- device tokens ---
     device_tokens: str = os.getenv("DEVICE_TOKENS", "").strip()
