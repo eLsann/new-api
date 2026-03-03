@@ -143,16 +143,39 @@ jobs:
         with:
           authkey: ${{ secrets.TAILSCALE_AUTHKEY }}
 
+      - name: Wait for Tailscale peer
+        env:
+          SSH_HOST: ${{ secrets.SSH_HOST }}
+        run: |
+          echo "⏳ Menunggu Tailscale terhubung ke $SSH_HOST..."
+          for i in $(seq 1 12); do
+            if tailscale ping --c 1 "$SSH_HOST" &>/dev/null; then
+              echo "✅ Tailscale peer reachable (coba ke-$i)"
+              break
+            fi
+            echo "  ⏱️  Belum terhubung, tunggu 5 detik... ($i/12)"
+            sleep 5
+          done
+
       - name: Add SSH known host
         env:
           SSH_HOST: ${{ secrets.SSH_HOST }}
         run: |
           [ -z "$SSH_HOST" ] && { echo "❌ SSH_HOST kosong!"; exit 1; }
           mkdir -p ~/.ssh
-          ssh-keyscan -H "$SSH_HOST" >> ~/.ssh/known_hosts || {
-            echo "❌ ssh-keyscan gagal! Cek SSH_HOST (Tailscale IP) dan port 22."
+          # Retry ssh-keyscan sampai 3x (jaga-jaga jika masih ada lag)
+          for i in 1 2 3; do
+            ssh-keyscan -T 10 -H "$SSH_HOST" >> ~/.ssh/known_hosts && break
+            echo "  ⚠️  ssh-keyscan attempt $i gagal, retry dalam 5s..."
+            sleep 5
+          done
+          # Verifikasi known_hosts tidak kosong
+          if ! grep -q "$SSH_HOST" ~/.ssh/known_hosts 2>/dev/null; then
+            echo "❌ ssh-keyscan gagal setelah 3x! Cek SSH_HOST (Tailscale IP) dan port 22."
             exit 1
-          }
+          fi
+          echo "✅ SSH known host berhasil ditambahkan"
+
 
       # ── SYNC CONFIG FILES ke server (idempotent, aman dijalankan berkali-kali) ──
       # docker-compose.yml dan mysql_conf/ selalu sinkron dari repo ke server
