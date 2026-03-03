@@ -169,8 +169,8 @@ jobs:
             echo "  ⚠️  ssh-keyscan attempt $i gagal, retry dalam 5s..."
             sleep 5
           done
-          # Verifikasi known_hosts tidak kosong
-          if ! grep -q "$SSH_HOST" ~/.ssh/known_hosts 2>/dev/null; then
+          # Verifikasi dengan ssh-keygen -F (support hashed known_hosts dari flag -H)
+          if ! ssh-keygen -F "$SSH_HOST" &>/dev/null; then
             echo "❌ ssh-keyscan gagal setelah 3x! Cek SSH_HOST (Tailscale IP) dan port 22."
             exit 1
           fi
