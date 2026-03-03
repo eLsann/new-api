@@ -135,6 +135,9 @@ jobs:
       name: production
 
     steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
       - name: Connect to Tailscale
         uses: tailscale/github-action@v2
         with:
@@ -150,6 +153,32 @@ jobs:
             echo "❌ ssh-keyscan gagal! Cek SSH_HOST (Tailscale IP) dan port 22."
             exit 1
           }
+
+      # ── SYNC CONFIG FILES ke server (idempotent, aman dijalankan berkali-kali) ──
+      # docker-compose.yml dan mysql_conf/ selalu sinkron dari repo ke server
+      # Tidak perlu upload manual lagi setiap kali ada perubahan config
+      - name: Sync config files to server
+        env:
+          SSH_HOST: ${{ secrets.SSH_HOST }}
+          SSH_USER: ${{ secrets.SSH_USER }}
+          SSH_PORT: ${{ secrets.SSH_PORT || 22 }}
+        run: |
+          eval $(ssh-agent -s)
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" | ssh-add -
+          REMOTE="${SSH_USER}@${SSH_HOST}"
+          PORT="${SSH_PORT:-22}"
+
+          # Upload docker-compose.yml
+          scp -P "$PORT" docker-compose.yml "$REMOTE:${{ env.DEPLOY_PATH }}/docker-compose.yml"
+
+          # Upload mysql config (buat direktori dulu jika belum ada)
+          ssh -p "$PORT" "$REMOTE" "mkdir -p ${{ env.DEPLOY_PATH }}/mysql_conf"
+          scp -P "$PORT" mysql_conf/low_memory.cnf "$REMOTE:${{ env.DEPLOY_PATH }}/mysql_conf/low_memory.cnf"
+
+          # Upload .env.production.example sebagai referensi (tidak overwrite .env)
+          scp -P "$PORT" .env.production.example "$REMOTE:${{ env.DEPLOY_PATH }}/.env.production.example"
+
+          echo "✅ Config files synced to server"
 
       # ── SINGLE SSH SESSION: preflight + deploy + health check + cleanup ──
       # Sebelumnya: 2 koneksi SSH terpisah (+30-60s overhead).
@@ -173,6 +202,10 @@ jobs:
 
             [ -d "$DEPLOY_PATH" ] || { echo "❌ $DEPLOY_PATH tidak ada. Jalankan server_setup.sh!"; exit 1; }
             cd "$DEPLOY_PATH"
+
+            # Auto-create direktori yang dibutuhkan (mkdir -p aman dijalankan berkali-kali)
+            mkdir -p data/snapshots logs mysql_data mysql_conf
+            echo "📁 Direktori data siap"
 
             [ -f .env ] || { echo "❌ .env tidak ada. Copy dari .env.production.example!"; exit 1; }
 
